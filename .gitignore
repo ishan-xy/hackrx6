@@ -1,0 +1,9 @@
+.env
+__pycache__
+.venv
+downloads/*
+*.pyc
+*.pyo
+*.pyd
+*.db
+test.py

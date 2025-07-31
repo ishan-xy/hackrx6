@@ -1,0 +1,4 @@
+fastapi[standardized]
+requests
+python-dotenv
+redis
