@@ -3,7 +3,6 @@ from retriever import RetrieverAgent
 from generator import GeneratorAgent
 from typing import Dict, Any, List
 import redis, json
-from handlers.hackrx import CHANNEL_NAME
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import threading
 import time
@@ -91,60 +90,60 @@ def process_questions_parallel(questions: List[str], max_workers: int = 5) -> Li
     
     return results
 
-def main():
-    """Main function to listen for Redis events and process questions"""
-    r = redis.Redis(host='localhost', port=6379, db=0, protocol=3)
-    pubsub = r.pubsub()
-    pubsub.subscribe(CHANNEL_NAME)
-    print("Listening for events on 'hackrx_events'...")
+# def main():
+#     """Main function to listen for Redis events and process questions"""
+#     r = redis.Redis(host='localhost', port=6379, db=0, protocol=3)
+#     pubsub = r.pubsub()
+#     pubsub.subscribe(CHANNEL_NAME)
+#     print("Listening for events on 'hackrx_events'...")
     
-    try:
-        for msg in pubsub.listen():
-            if msg["type"] == "message":
-                try:
-                    data = json.loads(msg["data"])
-                except Exception:
-                    data = msg["data"]
+#     try:
+#         for msg in pubsub.listen():
+#             if msg["type"] == "message":
+#                 try:
+#                     data = json.loads(msg["data"])
+#                 except Exception:
+#                     data = msg["data"]
 
-                # Only respond to run_hackrx to simulate worker logic
-                if isinstance(data, dict) and data.get("event_type") == "run_hackrx":
-                    filehash = data.get("filehash")
-                    questions = data.get("questions", [])
+#                 # Only respond to run_hackrx to simulate worker logic
+#                 if isinstance(data, dict) and data.get("event_type") == "run_hackrx":
+#                     filehash = data.get("filehash")
+#                     questions = data.get("questions", [])
                     
-                    print(f"Processing {len(questions)} questions for filehash: {filehash}")
-                    start_time = time.time()
+#                     print(f"Processing {len(questions)} questions for filehash: {filehash}")
+#                     start_time = time.time()
                     
-                    # Process questions in parallel
-                    results = process_questions_parallel(questions)
+#                     # Process questions in parallel
+#                     results = process_questions_parallel(questions)
                     
-                    # Extract only the generated_answer from each result
-                    answers = []
-                    for result in results:
-                        if result.get("status") == "success":
-                            answers.append(result.get("generated_answer", ""))
-                        else:
-                            # For errors, include the error message as the answer
-                            answers.append(f"Error: {result.get('error', 'Unknown error')}")
+#                     # Extract only the generated_answer from each result
+#                     answers = []
+#                     for result in results:
+#                         if result.get("status") == "success":
+#                             answers.append(result.get("generated_answer", ""))
+#                         else:
+#                             # For errors, include the error message as the answer
+#                             answers.append(f"Error: {result.get('error', 'Unknown error')}")
                     
-                    processing_time = time.time() - start_time
-                    print(f"Processed {len(questions)} questions in {processing_time:.2f} seconds")
+#                     processing_time = time.time() - start_time
+#                     print(f"Processed {len(questions)} questions in {processing_time:.2f} seconds")
                     
-                    # Publish result event
-                    result_event = {
-                        "event_type": "result",
-                        "filehash": filehash,
-                        "questions": questions,
-                        "answers": answers,
-                        "processing_time": processing_time,
-                        "status": "result_ready"
-                    }
-                    r.publish(CHANNEL_NAME, json.dumps(result_event))
-                    print(f"Published results for filehash: {filehash}")
+#                     # Publish result event
+#                     result_event = {
+#                         "event_type": "result",
+#                         "filehash": filehash,
+#                         "questions": questions,
+#                         "answers": answers,
+#                         "processing_time": processing_time,
+#                         "status": "result_ready"
+#                     }
+#                     r.publish(CHANNEL_NAME, json.dumps(result_event))
+#                     print(f"Published results for filehash: {filehash}")
 
-    except KeyboardInterrupt:
-        print("Stopped listening.")
-    finally:
-        pubsub.close()
+#     except KeyboardInterrupt:
+#         print("Stopped listening.")
+#     finally:
+#         pubsub.close()
 
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     main()
