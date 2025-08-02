@@ -210,7 +210,9 @@ def run_hackrx(req: Upload, Authorization: Optional[str] = Header(None)):
                 # if result_data != None:
                 #     answers = result_data.get("answers", [])
                 #     return {"answers": answers}
+                
                 result_data = ml_run.process_questions_parallel(req.questions, 10)
+                print(result_data)
                 answers = [res.get("generated_answer", "") for res in result_data if res.get("status") == "success"]
                 return {"answers": answers}
 
@@ -241,6 +243,7 @@ def run_hackrx(req: Upload, Authorization: Optional[str] = Header(None)):
         #     print(f"Received {len(answers)} answers for file {file_hash[:10]}...")
         #     return {"answers": answers}
         result_data = ml_run.process_questions_parallel(req.questions, 10)
+        print(result_data)
         answers = [res.get("generated_answer", "") for res in result_data if res.get("status") == "success"]
         print(f"Processed {len(req.questions)} questions for file {file_hash[:10]}...")
         return {"answers": answers}
