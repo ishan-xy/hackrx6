@@ -149,7 +149,7 @@ def publish_file_event(event_type: str, file_hash: str, file_path: str) -> None:
         print(f"Failed to publish event to Redis: {e}")
 
 
-def wait_for_result(file_hash, timeout=30):
+def wait_for_result(file_hash, timeout=30000):
     """
     Subscribe to 'file_results' channel, block until a result event
     for the given file_hash is received, or timeout in seconds.
