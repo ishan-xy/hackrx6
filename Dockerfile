@@ -12,13 +12,8 @@ COPY ./requirements.txt /app/requirements.txt
 RUN pip install --no-cache-dir --upgrade -r /app/requirements.txt
 RUN pip install -U FlagEmbedding
 RUN pip install google-generativeai
-
 COPY ./ /app
-
-# Make the startup script executable
-RUN chmod +x /app/start.sh
 
 EXPOSE 4004
 
-# Set the startup script as the command
-CMD ["/app/start.sh"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "4004"]

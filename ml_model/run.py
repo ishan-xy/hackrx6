@@ -1,6 +1,6 @@
-from query_enhancer import QueryEnhancerAgent
-from retriever import RetrieverAgent
-from generator import GeneratorAgent
+from .query_enhancer import QueryEnhancerAgent
+from .retriever import RetrieverAgent
+from .generator import GeneratorAgent
 from typing import Dict, Any, List
 import redis, json
 from concurrent.futures import ThreadPoolExecutor, as_completed

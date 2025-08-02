@@ -2,6 +2,7 @@ from fastapi import APIRouter, Header, status, HTTPException
 from typing import List, Optional, Dict, Any, Tuple
 from pydantic import BaseModel
 from dotenv import load_dotenv
+import ml_model.run as ml_run
 import shutil
 import requests
 import os
@@ -17,8 +18,8 @@ import time
 load_dotenv()
 
 file_lock = threading.Lock()
-r = redis.Redis(host='redis', port=6379, db=0, protocol=3)
-CHANNEL_NAME = "hakrx_events"
+# r = redis.Redis(host='redis', port=6379, db=0, protocol=3)
+# CHANNEL_NAME = "hakrx_events"
 router = APIRouter(
     prefix=f"{os.getenv('ROOT_ENDPOINT')}",
     responses={404: {"description": "Not found"}}
@@ -136,45 +137,45 @@ def cleanup_temp_file(temp_filepath: Optional[str]) -> None:
             os.remove(temp_filepath)
         except Exception as e:
             print(f"Failed to remove temp file {temp_filepath}: {e}")
-def publish_file_event(event_type: str, file_hash: str, file_path: str) -> None:
-    try:
-        event_data = {
-            "event_type": event_type,
-            "filehash": file_hash,
-            "filepath": file_path
-        }
-        r.publish(CHANNEL_NAME, json.dumps(event_data))
-        print(f"Published {event_type} event to Redis")
-    except Exception as e:
-        print(f"Failed to publish event to Redis: {e}")
+# def publish_file_event(event_type: str, file_hash: str, file_path: str) -> None:
+#     try:
+#         event_data = {
+#             "event_type": event_type,
+#             "filehash": file_hash,
+#             "filepath": file_path
+#         }
+#         r.publish(CHANNEL_NAME, json.dumps(event_data))
+#         print(f"Published {event_type} event to Redis")
+#     except Exception as e:
+#         print(f"Failed to publish event to Redis: {e}")
 
 
-def wait_for_result(file_hash, timeout=30000):
-    """
-    Subscribe to 'file_results' channel, block until a result event
-    for the given file_hash is received, or timeout in seconds.
-    """
-    pubsub = r.pubsub()
-    pubsub.subscribe(CHANNEL_NAME)
-    start_time = time.time()
-    print(f"Waiting for 'result' event on file_hash {file_hash[:10]}...")
-    for message in pubsub.listen():
-        if message["type"] != "message":
-            continue
-        try:
-            data = json.loads(message["data"])
-            if data.get("event_type") == "result" and data.get("filehash") == file_hash:
-                pubsub.close()
-                print(f"Received result for file_hash {file_hash[:10]}")
-                return data
-        except Exception:
-            pass
-        if time.time() - start_time > timeout:
-            pubsub.close()
-            raise HTTPException(
-                status_code=status.HTTP_504_GATEWAY_TIMEOUT,
-                detail="Timed out waiting for external file result."
-            )
+# def wait_for_result(file_hash, timeout=30000):
+#     """
+#     Subscribe to 'file_results' channel, block until a result event
+#     for the given file_hash is received, or timeout in seconds.
+#     """
+#     pubsub = r.pubsub()
+#     pubsub.subscribe(CHANNEL_NAME)
+#     start_time = time.time()
+#     print(f"Waiting for 'result' event on file_hash {file_hash[:10]}...")
+#     for message in pubsub.listen():
+#         if message["type"] != "message":
+#             continue
+#         try:
+#             data = json.loads(message["data"])
+#             if data.get("event_type") == "result" and data.get("filehash") == file_hash:
+#                 pubsub.close()
+#                 print(f"Received result for file_hash {file_hash[:10]}")
+#                 return data
+#         except Exception:
+#             pass
+#         if time.time() - start_time > timeout:
+#             pubsub.close()
+#             raise HTTPException(
+#                 status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+#                 detail="Timed out waiting for external file result."
+#             )
 
 @router.post("/hackrx/run", status_code=status.HTTP_200_OK)
 def run_hackrx(req: Upload, Authorization: Optional[str] = Header(None)):
@@ -202,13 +203,16 @@ def run_hackrx(req: Upload, Authorization: Optional[str] = Header(None)):
                 existing_filepath = os.path.join(downloads_dir, existing_entry["generic_filename"])
 
                 cleanup_temp_file(temp_filepath)
-                publish_file_event("run_hackrx", file_hash, existing_filepath)
+                # publish_file_event("run_hackrx", file_hash, existing_filepath)
 
                 # ----- Wait for result event -----
-                result_data = wait_for_result(file_hash, timeout=30)
-                if result_data != None:
-                    answers = result_data.get("answers", [])
-                    return {"answers": answers}
+                # result_data = wait_for_result(file_hash, timeout=30)
+                # if result_data != None:
+                #     answers = result_data.get("answers", [])
+                #     return {"answers": answers}
+                result_data = ml_run.process_questions_parallel(req.questions, 10)
+                answers = [res.get("generated_answer", "") for res in result_data if res.get("status") == "success"]
+                return {"answers": answers}
 
             # Step 4: Process new file
             extension = determine_file_extension(req.documents, response)
@@ -228,14 +232,18 @@ def run_hackrx(req: Upload, Authorization: Optional[str] = Header(None)):
 
         print(f"New document saved at: {final_filepath}")
 
-        publish_file_event("run_hackrx", file_hash, final_filepath)
+        # publish_file_event("run_hackrx", file_hash, final_filepath)
 
         # ----- Wait for result event -----
-        result_data = wait_for_result(file_hash, timeout=30)
-        if result_data is not None:
-            answers = result_data.get("answers", [])
-            print(f"Received {len(answers)} answers for file {file_hash[:10]}...")
-            return {"answers": answers}
+        # result_data = wait_for_result(file_hash, timeout=30)
+        # if result_data is not None:
+        #     answers = result_data.get("answers", [])
+        #     print(f"Received {len(answers)} answers for file {file_hash[:10]}...")
+        #     return {"answers": answers}
+        result_data = ml_run.process_questions_parallel(req.questions, 10)
+        answers = [res.get("generated_answer", "") for res in result_data if res.get("status") == "success"]
+        print(f"Processed {len(req.questions)} questions for file {file_hash[:10]}...")
+        return {"answers": answers}
 
     except requests.exceptions.RequestException as e:
         raise HTTPException(

@@ -8,8 +8,7 @@ services:
       - "4004:4004"
     volumes:
       - .:/app
-    # This command first makes the script executable, then runs it.
-    command: sh -c "chmod +x /app/start.sh && /app/start.sh"
+    command: uvicorn main:app --host 0.0.0.0 --port 4004 --reload
     depends_on:
       - redis
     networks:
