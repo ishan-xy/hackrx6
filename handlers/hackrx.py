@@ -178,7 +178,7 @@ def cleanup_temp_file(temp_filepath: Optional[str]) -> None:
 #             )
 
 @router.post("/hackrx/run", status_code=status.HTTP_200_OK)
-def run_hackrx(req: Upload, Authorization: Optional[str] = Header(None)):
+async def run_hackrx(req: Upload, Authorization: Optional[str] = Header(None)):
 
     print("Received documents URL:", req.documents)
     print(f"Received {len(req.questions)} questions.")
