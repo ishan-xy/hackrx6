@@ -3,7 +3,6 @@ from retriever import RetrieverAgent
 from generator import GeneratorAgent
 from typing import Dict, Any, List
 import redis, json
-from handlers.hackrx import CHANNEL_NAME
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import threading
 import time
@@ -11,6 +10,8 @@ import time
 enhancer = QueryEnhancerAgent()
 retriever = RetrieverAgent()
 generator = GeneratorAgent()
+CHANNEL_NAME = "hakrx_events"
+
 
 def extract_decision_from_answer(answer: Dict[str, Any]) -> str:
     """Extract the main decision/answer from the generated response"""
