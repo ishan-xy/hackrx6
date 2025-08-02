@@ -1,4 +1,4 @@
-FROM python:latest
+FROM python:3.10
 
 WORKDIR /app
 
@@ -11,7 +11,6 @@ COPY ./requirements.txt /app/requirements.txt
 
 RUN pip install --no-cache-dir --upgrade -r /app/requirements.txt
 RUN pip install -U FlagEmbedding
-RUN pip install google-generativeai
 COPY ./ /app
 
 EXPOSE 4004

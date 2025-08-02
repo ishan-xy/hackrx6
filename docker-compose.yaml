@@ -1,9 +1,7 @@
 services:
-  api:
+  backend:
     build: .
-    container_name: hackrx_api
-    env_file:
-      - .env
     ports:
       - "4004:4004"
-    command: uvicorn main:app --host 0.0.0.0 --port 4004 --reload
+    env_file:
+      - ./.env

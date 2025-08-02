@@ -13,7 +13,7 @@ class GeneratorAgent:
     _initialized = False
 
     def __init__(self):
-        if not self._initialized:
+        if not GeneratorAgent._initialized:
             load_dotenv()
             api_key = os.getenv("GEMINI_API_KEY")
             if not api_key:

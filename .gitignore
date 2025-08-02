@@ -1,9 +1,8 @@
 .env
-__pycache__
 .venv
-downloads/*
+__pycache__
+__pycache__/*
 *.pyc
 *.pyo
 *.pyd
-*.db
-test.py
+*.pkl

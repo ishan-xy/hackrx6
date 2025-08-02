@@ -1,8 +1,8 @@
-from ml_model.query_enhancer import QueryEnhancerAgent
-from ml_model.retriever import RetrieverAgent
-from ml_model.generator import GeneratorAgent
+from handler.query_enhancer import QueryEnhancerAgent
+from handler.retriever import RetrieverAgent
+from handler.generator import GeneratorAgent
 from typing import Dict, Any, List
-import redis, json
+import json
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import threading
 import time
@@ -27,9 +27,9 @@ def extract_decision_from_answer(answer: Dict[str, Any]) -> str:
 def process_single_question(user_query):
     """Process a single question through the pipeline"""
     # Re-import agents inside the process to avoid multiprocessing issues
-    from ml_model.query_enhancer import QueryEnhancerAgent
-    from ml_model.retriever import RetrieverAgent
-    from ml_model.generator import GeneratorAgent
+    from handler.query_enhancer import QueryEnhancerAgent
+    from handler.retriever import RetrieverAgent
+    from handler.generator import GeneratorAgent
     print(f"Processing question: {user_query}")
     enhancer = QueryEnhancerAgent()
     retriever = RetrieverAgent()
@@ -56,7 +56,7 @@ def process_single_question(user_query):
             "status": "error"
         }
 
-def process_questions_parallel(questions: List[str], max_workers: int = 5) -> List[Dict[str, Any]]:
+def process_questions_parallel(questions: List[str], max_workers: int = 10) -> List[Dict[str, Any]]:
     """Process multiple questions in parallel using ThreadPoolExecutor"""
     if not questions:
         return []
@@ -91,61 +91,3 @@ def process_questions_parallel(questions: List[str], max_workers: int = 5) -> Li
     results.sort(key=lambda x: question_to_index.get(x.get("question", ""), len(questions)))
     
     return results
-
-def main():
-    """Main function to listen for Redis events and process questions"""
-    r = redis.Redis(host='redis', port=6379, db=0, protocol=3)
-    pubsub = r.pubsub()
-    pubsub.subscribe(CHANNEL_NAME)
-    print("Listening for events on 'hackrx_events'...")
-    
-    try:
-        for msg in pubsub.listen():
-            if msg["type"] == "message":
-                try:
-                    data = json.loads(msg["data"])
-                except Exception:
-                    data = msg["data"]
-
-                # Only respond to run_hackrx to simulate worker logic
-                if isinstance(data, dict) and data.get("event_type") == "run_hackrx":
-                    filehash = data.get("filehash")
-                    questions = data.get("questions", [])
-                    
-                    print(f"Processing {len(questions)} questions for filehash: {filehash}")
-                    start_time = time.time()
-                    
-                    # Process questions in parallel
-                    results = process_questions_parallel(questions)
-                    
-                    # Extract only the generated_answer from each result
-                    answers = []
-                    for result in results:
-                        if result.get("status") == "success":
-                            answers.append(result.get("generated_answer", ""))
-                        else:
-                            # For errors, include the error message as the answer
-                            answers.append(f"Error: {result.get('error', 'Unknown error')}")
-                    
-                    processing_time = time.time() - start_time
-                    print(f"Processed {len(questions)} questions in {processing_time:.2f} seconds")
-                    
-                    # Publish result event
-                    result_event = {
-                        "event_type": "result",
-                        "filehash": filehash,
-                        "questions": questions,
-                        "answers": answers,
-                        "processing_time": processing_time,
-                        "status": "result_ready"
-                    }
-                    r.publish(CHANNEL_NAME, json.dumps(result_event))
-                    print(f"Published results for filehash: {filehash}")
-
-    except KeyboardInterrupt:
-        print("Stopped listening.")
-    finally:
-        pubsub.close()
-
-if __name__ == "__main__":
-    main()

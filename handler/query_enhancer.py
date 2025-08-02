@@ -22,7 +22,7 @@ class QueryEnhancerAgent:
     _initialized = False
 
     def __init__(self):
-        if not self._initialized:
+        if not QueryEnhancerAgent._initialized:
             load_dotenv()
             api_key = os.getenv("GEMINI_API_KEY")
             if not api_key:

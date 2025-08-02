@@ -1,9 +1,8 @@
-fastapi[standardized]
-requests
+fastapi
 python-dotenv
-redis
+requests
 uvicorn
+google-generativeai
+cmake
 httpx
-google-genai
-sentence-transformers
 pinecone
