@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from FlagEmbedding import BGEM3FlagModel
 from sentence_transformers.cross_encoder import CrossEncoder
 from pinecone.grpc import PineconeGRPC as Pinecone
-from .query_enhancer import EnhancedQuery
+from ml_model.query_enhancer import EnhancedQuery
 
 def hybrid_score_norm(dense, sparse, alpha: float):
     if alpha < 0 or alpha > 1:
