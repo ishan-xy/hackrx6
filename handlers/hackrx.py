@@ -17,7 +17,7 @@ import time
 load_dotenv()
 
 file_lock = threading.Lock()
-r = redis.Redis(host='localhost', port=6379, db=0, protocol=3)
+r = redis.Redis(host='redis', port=6379, db=0, protocol=3)
 CHANNEL_NAME = "hakrx_events"
 router = APIRouter(
     prefix=f"{os.getenv('ROOT_ENDPOINT')}",
