@@ -27,9 +27,9 @@ def extract_decision_from_answer(answer: Dict[str, Any]) -> str:
 def process_single_question(user_query):
     """Process a single question through the pipeline"""
     # Re-import agents inside the process to avoid multiprocessing issues
-    from query_enhancer import QueryEnhancerAgent
-    from retriever import RetrieverAgent
-    from generator import GeneratorAgent
+    from ml_model.query_enhancer import QueryEnhancerAgent
+    from ml_model.retriever import RetrieverAgent
+    from ml_model.generator import GeneratorAgent
     print(f"Processing question: {user_query}")
     enhancer = QueryEnhancerAgent()
     retriever = RetrieverAgent()
