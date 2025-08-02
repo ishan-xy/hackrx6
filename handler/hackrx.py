@@ -70,7 +70,7 @@ async def send_hackrx_result_to_discord(questions: List[str], answers: List[str]
     """
     try:
         # Start with document URL
-        content = f"Document: {document_url}\n\nAnswers:\n"
+        content = f"\nAnswers:\n"
         
         # Add answers with numbering
         for i, answer in enumerate(answers, 1):
