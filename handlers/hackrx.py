@@ -2,6 +2,7 @@ from fastapi import APIRouter, Header, status, HTTPException
 from typing import List, Optional, Dict, Any, Tuple
 from pydantic import BaseModel
 from dotenv import load_dotenv
+import shutil
 import requests
 import os
 import json
@@ -126,7 +127,7 @@ def save_metadata(downloads_dir: str, metadata: Dict[str, Any]) -> None:
 
 def save_new_file(temp_filepath: str, downloads_dir: str, filename: str) -> str:
     final_filepath = os.path.join(downloads_dir, filename)
-    os.rename(temp_filepath, final_filepath)
+    shutil.move(temp_filepath, final_filepath)
     return final_filepath
 
 def cleanup_temp_file(temp_filepath: Optional[str]) -> None:
