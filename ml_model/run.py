@@ -93,7 +93,7 @@ def process_questions_parallel(questions: List[str], max_workers: int = 5) -> Li
 
 def main():
     """Main function to listen for Redis events and process questions"""
-    r = redis.Redis(host='localhost', port=6379, db=0, protocol=3)
+    r = redis.Redis(host='redis', port=6379, db=0, protocol=3)
     pubsub = r.pubsub()
     pubsub.subscribe(CHANNEL_NAME)
     print("Listening for events on 'hackrx_events'...")

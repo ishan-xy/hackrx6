@@ -14,6 +14,19 @@ services:
     networks:
       - internal_network
 
+  ml_worker:
+    build: .
+    container_name: hackrx_ml_worker
+    command: ["python", "./ml_model/run.py"]
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+    networks:
+      - internal_network
+
   redis:
     image: "redis:alpine"
     container_name: hackrx_redis
