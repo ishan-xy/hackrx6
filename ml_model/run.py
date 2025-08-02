@@ -30,7 +30,7 @@ def process_single_question(user_query):
     from query_enhancer import QueryEnhancerAgent
     from retriever import RetrieverAgent
     from generator import GeneratorAgent
-
+    print(f"Processing question: {user_query}")
     enhancer = QueryEnhancerAgent()
     retriever = RetrieverAgent()
     generator = GeneratorAgent()
