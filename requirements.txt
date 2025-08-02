@@ -5,6 +5,5 @@ redis
 uvicorn
 httpx
 google-genai
-FlagEmbedding
 sentence-transformers
 pinecone

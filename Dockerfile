@@ -11,9 +11,10 @@ COPY ./requirements.txt /app/requirements.txt
 
 # 4. Install the dependencies
 RUN pip install --no-cache-dir --upgrade -r /app/requirements.txt
+RUN pip install -U FlagEmbedding
 
 # 5. Copy the rest of the application source code
-COPY ./ /app/
+COPY ./ /app/`
 
 # 6. Expose the port the app will run on
 EXPOSE 4004
