@@ -27,18 +27,18 @@ class Upload(BaseModel):
     questions: List[str]
 
 
-async def send_to_discord(webhook_url: str, content: str, embed_data: Optional[Dict[str, Any]] = None):
+async def send_to_discord(webhook_url: str, content: str):
     """
-    Sends a message to Discord webhook.
+    Sends a simple message to Discord webhook.
     
     Args:
         webhook_url (str): Discord webhook URL
         content (str): Message content (up to 2000 characters)
-        embed_data (dict, optional): Embed data for rich formatting
     """
     if not webhook_url:
         print("[WARNING] Discord webhook URL not configured")
         return
+    
     try:
         # Ensure content doesn't exceed Discord's 2000 character limit
         if len(content) > 2000:
@@ -61,7 +61,7 @@ async def send_to_discord(webhook_url: str, content: str, embed_data: Optional[D
 
 async def send_hackrx_result_to_discord(questions: List[str], answers: List[str], document_url: str):
     """
-    Sends HackRX processing results to Discord with formatted output.
+    Sends HackRX processing results to Discord with minimal formatting.
     
     Args:
         questions (List[str]): List of questions processed
@@ -69,50 +69,21 @@ async def send_hackrx_result_to_discord(questions: List[str], answers: List[str]
         document_url (str): URL of the processed document
     """
     try:
-        # Create a formatted summary
-        summary = f"**HackRX Processing Complete** 📋\n\n"
-        summary += f"**Document:** {document_url}\n"
-        summary += f"**Questions Processed:** {len(questions)}\n"
-        summary += f"**Answers Generated:** {len(answers)}\n\n"
+        # Start with document URL
+        content = f"Document: {document_url}\n\nAnswers:\n"
         
-        # Add first few Q&A pairs as preview
-        preview_count = min(3, len(questions))
-        summary += "**Preview (First 3 Q&A pairs):**\n"
+        # Add answers with numbering
+        for i, answer in enumerate(answers, 1):
+            answer_text = f"{i}. {answer}\n"
+            
+            # Check if adding this answer would exceed the limit
+            if len(content + answer_text) > 1950:  # Leave some buffer
+                content += f"... and {len(answers) - i + 1} more answers (truncated due to length)"
+                break
+            
+            content += answer_text
         
-        for i in range(preview_count):
-            question = questions[i][:100] + "..." if len(questions[i]) > 100 else questions[i]
-            answer = answers[i][:150] + "..." if len(answers[i]) > 150 else answers[i]
-            summary += f"\n**Q{i+1}:** {question}\n**A{i+1}:** {answer}\n"
-        
-        if len(questions) > preview_count:
-            summary += f"\n... and {len(questions) - preview_count} more Q&A pairs"
-        
-        # Create an embed for better formatting
-        embed_data = {
-            "title": "HackRX Processing Results",
-            "description": f"Successfully processed {len(questions)} questions from document",
-            "color": 0x00ff00,  # Green color
-            "fields": [
-                {
-                    "name": "Document URL",
-                    "value": document_url,
-                    "inline": False
-                },
-                {
-                    "name": "Questions Count",
-                    "value": str(len(questions)),
-                    "inline": True
-                },
-                {
-                    "name": "Answers Count", 
-                    "value": str(len(answers)),
-                    "inline": True
-                }
-            ],
-            "timestamp": None  # Discord will use current timestamp
-        }
-        
-        await send_to_discord(DISCORD_WEBHOOK_URL2, summary, embed_data)
+        await send_to_discord(DISCORD_WEBHOOK_URL2, content)
         
     except Exception as e:
         print(f"[ERROR] Failed to send HackRX results to Discord: {e}")
@@ -176,12 +147,12 @@ async def run_hackrx(req: Upload, Authorization: Optional[str] = Header(None)):
     except requests.RequestException as e:
         print(f"[ERROR] File download failed: {e}")
         # Send error to Discord
-        await send_to_discord(DISCORD_WEBHOOK_URL2, f"**HackRX Error** ❌\n\nFile download failed: {e}\nDocument URL: {req.documents}")
+        await send_to_discord(DISCORD_WEBHOOK_URL2, f"HackRX Error - File download failed: {e}\nDocument: {req.documents}")
         raise HTTPException(status_code=400, detail=f"Download failed: {e}")
     except Exception as e:
         print(f"[ERROR] Internal error: {e}")
         # Send error to Discord
-        await send_to_discord(DISCORD_WEBHOOK_URL2, f"**HackRX Error** ❌\n\nInternal error: {e}\nDocument URL: {req.documents}")
+        await send_to_discord(DISCORD_WEBHOOK_URL2, f"HackRX Error - Internal error: {e}\nDocument: {req.documents}")
         raise HTTPException(status_code=500, detail=f"Internal error: {e}")
     finally:
         if temp_file and os.path.exists(temp_file):
